@@ -1,0 +1,246 @@
+Youtube Sobre Django  
+https://m.youtube.com/watch?v=Dzuiy-JNi-E&t=139s
+
+senha do admin 1234
+
+
+***************CRIANDO AMBIENTE VIRTUAL***********************
+
+---No terminal cmd
+
+1-     python -m venv venv
+2-     .\venv\Scripts\activate
+3-      pip install django
+4-     django-admin startproject tutorialdjango          (criando projeto)
+5-     cd.\tutorialdjango\                                 (criando a pasta)
+6-     code .                                              (para abrir o vs code)
+
+
+                                            
+
+**Selecionando interpretador no VScode **
+F1   
+  select   
+     Interpretador   
+        recomendado
+
+*****Voltar ao terminal cmd *****
+
+7-    python .\manage.py runserver          (ira aparecer o link)
+
+--> Tambem aparecera uma mensagem 'you have 18 unapplied migration ( admin, auth, contenttypes, session)
+-----O que isso significa, esses 4 são responsaveis pela estrutura do banco de dados são encontrados em 'Nome da pasta' - 'settings.py' - INSTALLED_APPS. Com eles nao precisamos 
+escrever SQL, escreverá codigo python e ele cuidará desta função . É necessário escrever um comando para ativar os 4.
+8- Abrir SQL BROWSER  - Open Database - find the project
+--> Deverá aparecer 
+Tables(0)
+Indices(0)
+views(0)
+Triggers(0)
+
+****Volte ao terminal de comando cmd
+Ative 
+9-        python .\manage.py sqlmigrate auth 0001
+	  python .\manage.py sqlmigrate sessions 0001
+
+10-       python .\manage.py showmigrations               (mostrar migraçoes)
+Ira ver as 18 migraçoes dividas pelas 4 estruturas
+
+11-       python manage.py migrate
+
+**Voltar para o banco de dados em no DB Browser e dar um F5 para ver todas as tabelas. 
+
+****Criando APP*****
+
+12-      python .\manage.py startapp blog   (Escolher nome do projeto neste caso 'blog')
+
+** Vá para o VSCode na pasta criada para editar em models.py
+
+****Criando a primeira app para um blog*****
+DENTRO DE models.py
+
+from django.contrib.auth.models import User
+from django.db import models
+
+# Create your models here.
+
+class Post(models.Model):
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    body = models.TextField()
+    created = models.DateTimeField(auto_now_add = True)
+    updated = models.DateTimeField(auto_now=True)
+
+----> Na sequencia devera ir em settings.py 
+  - INSTALLED_APPS
+    -- e adicionar o nome do pasta criada na ultima linha, exemplo aqui. 
+'blog.apps.BlogConfig', 
+
+13- Fazer a migração - Terminal cmd digitar  .\manage.py makemigrations blog
+aparecera 0001_initial.py no vscode
+
+14- teminal  python.\manage.py sqlmigrate blog 0001
+15-          python .\manage.py migrate blog
+Abrir sql e ver a pasta que foi blog que foi criada, pode ser verificada tambem em browser data
+***********Criando interface para isuario 
+16- terminal python .\manage.py createsuperuser   ( super user nao é um usuario comum é um usuario com todas as permissões)
+-- pode deixar os campos em branco mas colocar uma senha
+
+************RODAR O COD  python .\manage.py runserver*********************
+
+17- Agora vamos rodar o ver no que deu python .\manage.py runserver
+abrir o link gerado e adicionar /admin
+- Se não atribui nome então devera ser cris8 e a senha atribuida
+
+*******OBSERVAÇÃO: Isto que foi gerado e somente para a equipe ou vc, o criador do site.
+--Para trocar a linguagem que aparecera na interface ja no vs em settings e troque em LANGUAGE_CODE = 'pt-br'
+
+ADD INSIDE admin.py
+
+from .models import Post
+
+***************************SE FOR ADICIONAR ALGO EM MODELS***************************
+
+python manage.py makemigrations
+#Caso tenha pergunta selecione 1
+#Depois None
+python manage.py migrate
+
+Eu tive que usar aqui depois de uns erro python manage.py makemigrations blog
+respondi 1
+depois None
+python manage.py migrate
+python .\manage.py runserver    ( tudo voltou ao normal )
+
+**************************************************************************************
+
+-- Continuando----
+@admin.register(Post)
+class PostAdmin(admin.ModelAdmin):
+    list_display = ('title', 'slug', 'author', 'created', 'updated')
+    prepopulated_fields = {'slug': ('title',)}
+
+**********Acessando API**************
+
+18-    pip install ipython
+19-    python .\manage.py shell
+Talvez nessa sequencia deve ter de por from blog.models import Post
+
+20- from blog.models import Post   Trabalhar no terminal      
+21- posts = Post.objects.all()
+22- posts  ira aparecer os posts
+23- post = Post.objects.get(id=1)
+24- post
+25- post.author  (posso ter todas as informaçoes)
+26- post.created (sao exemplos de informaçoes)
+27- post.title   ( apresenta o nome do titulo)
+28- post.title = 'Meu primeiro artigo'  ( para alterar o nome do article)
+28.1 post.get_absolute_url()  (descobrir a url correcta)
+29- post.save()  Para salvar alteraçoes no banco de dados
+
+***Criando views****
+
+Views é algo que quando solicitadas retornam coisas, podem ser html, csv, listar objeto, editar objeto... 
+
+30 ---> Criando views apartir de classes. 
+
+Dentro da pasta views.py
+
+from django.views.generic import DetailView, ListView
+
+from .models import Post
+
+class PostListView(ListView):
+    model = Post
+
+class PostDetailView(DetailView):
+    model = Post
+
+31 ***Criar uma nova pasta chamada url.py dentro de blog
+
+from django.urls import path
+from . import views
+
+app_name = 'blog'
+
+urlpatterns = [
+    path("", views.PostListView.as_view(), name='list'),
+    path('<slug:slug>/', views.PostDetailView.as_view(), name ='detail'),    
+]
+
+32 ** Abrir url.py que foi criada automaticamente antes. 
+
+from django.contrib import admin
+from django.urls import include, path
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('', include('blog.urls', namespace='blog')),
+]
+***********************************************
+
+*** Criar uma pasta dentro de blog chamada 'templates' outra pasta dentro de templates chamada 'blog' e dentro de blog um file chamado 'post_list.html' e outra base.html
+
+33- DENTRO DA FILE base html
+
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>{% block title %} {% endblock %}</title>      
+    </head>
+<body>
+    <header>
+        <h1>Meu blog em Django</h1>
+    </header>
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+</body>    
+</html>
+
+34- DENTRO DA FILE post_list.html
+
+{% extends "blog/base.html" %}
+
+{% block title %} Meu Blog 🐍 {% endblock %}
+
+{% block content %}
+    {% for post in post_list %}
+    <article>
+        <h2>{{ post.title }}</h2>
+        <p class = 'date'>
+            Publicado em {{ post.created }} por {{ post.author }}
+        </p>
+        {{ post.body|linebreaks|truncatewords:10 }}
+    </article>
+
+    {% endfor %}
+{% endblock %}  
+
+
+++++Continuam alteraçoes que nao vou descrever aqui++++++
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	 
+         
+
