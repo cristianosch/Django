@@ -1,4 +1,4 @@
-                                                              BLOG CRIADO EM PYTHON 
+                                                              BLOG CRIADO EM DJANGO
                                                               
                 
   Este é o meu primeiro contato com Django, é um blog criado de uma maneira simples com foco nas postagens interligado com o SQL de uma automatica que o Django é capaz de fazer. 
